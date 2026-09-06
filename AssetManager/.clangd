@@ -1,0 +1,17 @@
+CompileFlags:
+  Add:
+    - --target=x86_64-w64-mingw32
+    - -isystemC:/mingw64/include/c++/16.2.0
+    - -isystemC:/mingw64/include/c++/16.2.0/x86_64-w64-mingw32
+    - -isystemC:/mingw64/include/c++/16.2.0/backward
+    - -isystemC:/mingw64/lib/gcc/x86_64-w64-mingw32/16.2.0/include
+    - -isystemC:/mingw64/include
+    - -isystemC:/mingw64/x86_64-w64-mingw32/include
+    - -std=c++17
+  Compiler: C:/mingw64/bin/g++.exe
+
+Diagnostics:
+  UnusedIncludes: Strict
+
+Index:
+  Background: Build
