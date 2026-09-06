@@ -1,0 +1,16 @@
+{
+    "cmake.buildDirectory": "${workspaceFolder}/build",
+    "cmake.configureOnOpen": true,
+    "cmake.copyCompileCommands": "${workspaceFolder}/compile_commands.json",
+    "editor.formatOnSave": true,
+    "files.associations": {
+        "*.h": "cpp",
+        "*.cpp": "cpp",
+        "*.hpp": "cpp"
+    },
+    "files.exclude": {
+        "**/.git": true,
+        "**/build": true,
+        "**/cmake-build-*": true
+    }
+}
