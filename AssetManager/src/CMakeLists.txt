@@ -1,16 +1,6 @@
-# Library target
-add_library(mylib
-    mylib/mylib.cpp
-    mylib/mylib.h
-)
+# ─── Change this ──────────────────────────────────────────────────
+add_library(mylib INTERFACE)   # ← Name it mylib
 
-target_include_directories(mylib PUBLIC
+target_include_directories(mylib INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}
-)
-
-# Application target
-add_executable(myapp main.cpp)
-
-target_link_libraries(myapp PRIVATE
-    mylib
 )
