@@ -8,6 +8,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <variant>
 #include <vector>
 
 using json = nlohmann::json;
@@ -30,9 +31,9 @@ public:
 
   AssetManager(const AssetManager &) = delete;
   AssetManager &operator=(const AssetManager &) = delete;
-  std::string fetchfolder(std::string path);
+  
   void ReadAssetFile(const std::string &path) {
-    for (const auto entry :
+    for (const auto & entry :
          std::filesystem::recursive_directory_iterator(path)) {
 
       if (!entry.is_regular_file()) {
@@ -53,22 +54,55 @@ public:
       }
     }
   };
-  bool FileExistInRegistry(size_t id){
-        for (const auto& file : assetsRegistry_) {
-            if (file.id==id) {
-            return true;
-            }
-        }
-        return false;
+  bool FileExistInRegistry(size_t id) {
+    for (const auto &file : assetsRegistry_) {
+      if (file.id == id) {
+        return true;
+      }
+    }
+    return false;
+  };
+  std::string GetPathById(size_t id) {
+    for (const auto &file : assetsRegistry_) {
+      if (file.id == id) {
+
+        return file.filepath;
+      }
+    }
+  };
+  std::string GetExtentionById(size_t id) {
+    for (const auto &file : assetsRegistry_) {
+      if (file.id == id) {
+
+        return file.extension;
+      }
+    }
   };
 
-  template <typename File>
-  File LoadFile(size_t id) {
-    if(!FileExistInRegistry(id)) return ;
+  template <typename FILE>
+  void LoadFile(size_t id,FILE* inputfileptr) {
+    if (!FileExistInRegistry(id))
+      return;
+    std::string filepath = GetPathById(id);
+    std::string extention = GetExtentionById(id);
+    if (filepath.empty()) {
+      return;
+    }
+    for (const auto &loader : loadchecker_) {
+      if (loader->CanBeLoaded(extention)) {
+        AssetData asset = loader->Load(id, filepath);
+        if(const auto& fileptr = std::get_if<FILE>(&asset)) {
+          *inputfileptr=*fileptr;
+    
+    }
+      }
 
-
-
+    }
+    
+    return ;
   };
+  
+  
   // bool is fileloaded()
   //  unload all()
   //  unload(string path)
@@ -78,6 +112,10 @@ private:
   std::vector<AssetMetadata> assetsRegistry_;
   std::vector<std::unique_ptr<ILoader>> loadchecker_;
   size_t ID_ = 0;
-  AssetManager() = default;
+  std::string assetsFilePqth_;
+  AssetManager(){
+    CreateLoadChecker();
+    
+  };
   ~AssetManager() = default;
 };
