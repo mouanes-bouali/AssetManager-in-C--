@@ -13,11 +13,11 @@
 
 using json = nlohmann::json;
 
-enum CurrentMode { EDIT, RUNTIME };
+
 
 class AssetManager {
 public:
-  CurrentMode currentmode = EDIT;
+
   void CreateLoadChecker() {
     loadchecker_.push_back(std::make_unique<TextureLoader>());
     loadchecker_.push_back(std::make_unique<MeshLoader>());
