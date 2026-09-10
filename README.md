@@ -1,141 +1,171 @@
-# Asset Mangaer
-A subsystem that handles the game assets from the assets folder.It fetches exisitng files, loads needed assets in cache and remove non needed ones for performance. It works in Async/background so it doesn' freeze when loading large files.
+# AssetManager
 
+Single-file C++17 library for discovering and loading game assets. Scan folders, load textures/meshes/sounds/scripts, and cache them in memory.
 
-## Repository Structure
-
-```
-cpp-template/
-├── .gitignore
-├── README.md
-├── build.bat              # Windows build script
-├── build.sh               # Linux/macOS build script
-├── snippets/
-│   └── cpp.json           # VS Code C++ snippets
-└── AssetManager/
-    ├── CMakeLists.txt     # Root CMake (C++17)
-    ├── src/
-    │   ├── CMakeLists.txt # Library + app targets
-    │   ├── main.cpp       # Application entry point
-    │   └── core/
-    │       ├── mylib.h
-    │       └── mylib.cpp
-    ├── test/
-    │   ├── CMakeLists.txt # Catch2 auto-download
-    │   └── test_mylib.cpp
-    └── .vscode/
-        ├── settings.json
-        └── extensions.json
-```
-## Documentation
+---
 
 ## Quick Start
 
-### 1. Clone This Repo
+```cpp
+#include "AssetManager.hpp"
 
-```bash
-git clone https://github.com/yourusername/cpp-template.git
-cd cpp-template
+auto& am = AssetManager::getInstance();
 
+// 1. Scan folder
+am.ReadAssetFile("assets/");
 
-# Run
-./build/bin/myapp        # Linux/macOS
-build\bin\Release\myapp.exe  # Windows
+// 2. List what was found
+for (const auto& asset : am.GetRegistry())
+    std::cout << "[" << asset.id << "] " << asset.name << std::endl;
+
+// 3. Load by ID
+TextureFile tex;
+if (am.LoadFile(1, &tex)) {
+    std::cout << tex.width << "x" << tex.height << std::endl;
+}
 ```
 
-### 3. Symlink Snippets to VS Code
+---
 
-**Windows (PowerShell as Admin):**
-```powershell
-# Remove existing C++ snippets if any
-Remove-Item "$env:APPDATA\Code\User\snippets\cpp.json" -ErrorAction SilentlyContinue
+## What It Does
 
-# Create symlink
-New-Item -ItemType SymbolicLink `
-    -Path "$env:APPDATA\Code\User\snippets\cpp.json" `
-    -Target "C:\Users\ACER\Desktop\C++ Files\cpp-template\snippets\cpp.json"
+| Feature | |
+|---------|---|
+| Scans folders recursively | Assigns unique IDs starting at 1 |
+| Caches loaded assets | Loads each file only once |
+| Returns raw data | You upload to GPU, play audio, etc. |
+
+## What It Does NOT Do
+
+| | |
+|---|---|
+| No rendering | No audio playback |
+| No GPU uploads | No script execution |
+| No file modification | |
+
+You load the raw data. You decide what to do with it.
+
+---
+
+## Supported Types
+
+| Type | Struct | Extensions | Parser |
+|------|--------|-----------|--------|
+| Texture | `TextureFile` | .png .jpg .jpeg .tga .bmp | stb_image |
+| Mesh | `MeshFile` | .obj .fbx .gltf .glb .stl .ply | tinyobjloader |
+| Sound | `SoundFile` | .wav | built-in |
+| Script | `ScriptFile` | .lua .py .as .js | built-in |
+
+> Only `.obj` and `.wav` have full parsers. Other extensions are recognized but return empty structs.
+
+---
+
+## Installation
+
+Copy the folder into your project. Add `impl.cpp` to your build. Include the header. Done.
+
+```
+your-project/
+└── AssetManager/
+    ├── AssetManager.hpp
+    ├── ILoader.hpp
+    ├── Structs.hpp
+    ├── impl.cpp          <-- compile this
+    ├── stb_image.h
+    └── tiny_obj_loader.h
 ```
 
-**Linux/macOS:**
-```bash
-# Remove existing C++ snippets if any
-rm -f ~/.config/Code/User/snippets/cpp.json
-
-# Create symlink
-ln -s ~/cpp-template/snippets/cpp.json ~/.config/Code/User/snippets/cpp.json
+```cpp
+#include "AssetManager/AssetManager.hpp"
 ```
 
-### 4. Sync to a New PC
+No CMake. No package manager. No setup.
 
-```bash
-# Clone the template repo on the new machine
-git clone https://github.com/yourusername/cpp-template.git
+---
 
-# Symlink snippets (see step 3 for your OS)
-# Start new projects from the template (see step 2)
+## Documentation
+
+| Document | |
+|----------|---|
+| [API.md](API.md) | Complete reference with examples |
+| [Quick Start](#quick-start) | Copy-paste example above |
+
+---
+
+## API Overview
+
+```cpp
+// Lifecycle
+static AssetManager& getInstance();
+void ReadAssetFile(const std::string& path);
+
+// Loading
+template <typename FILE>
+bool LoadFile(size_t id, FILE* out);
+
+// Memory
+bool IsLoaded(size_t id) const;
+void Unload(size_t id);
+void UnloadAll();
+
+// Queries
+const std::vector<AssetMetadata>& GetRegistry() const;
+bool FileExistInRegistry(size_t id) const;
+std::string GetPathById(size_t id) const;
+std::string GetExtensionById(size_t id) const;
 ```
 
-## Snippets Included
+Full documentation with examples: [API.md](API.md)
 
-| Prefix       | Description                          |
-|-------------|--------------------------------------|
-| `cppclass`  | C++ class with rule of five           |
-| `cppmain`   | C++ main function                     |
-| `guard`     | Header include guard                  |
-| `cpptest`   | Catch2 test case                      |
-| `cmake_exe` | CMake add_executable target           |
-| `cmake_lib` | CMake add_library target              |
-| `cppinterface` | C++ interface (pure virtual)       |
-| `cppabstract` | C++ abstract class                  |
-| `cppns`     | C++ namespace block                   |
-| `singleton` | Meyers' singleton pattern             |
-| `cppfor`    | Range-based for loop                  |
-| `cppunique` | std::unique_ptr with make_unique      |
+---
 
-## VS Code Extensions
+## Workflow
 
-The template recommends these extensions (see `.vscode/extensions.json`):
-
-- **C/C++** (`ms-vscode.cpptools`) — IntelliSense, debugging
-- **CMake Tools** (`ms-vscode.cmake-tools`) — CMake integration
-- **clangd** (`llvm-vs-code-extensions.vscode-clangd`) — Code completion
-- **GitLens** (`eamodio.gitlens`) — Git supercharged
-- **Error Lens** (`usernamehw.errorlens`) — Inline error highlighting
-- **CMake** (`twxs.cmake`) — CMake language support
-
-## Build Options
-
-### Using CMake Presets (Recommended)
-```bash
-# Configure and build (debug)
-cmake --preset debug
-cmake --build --preset debug
-
-# Configure and build (release)
-cmake --preset release
-cmake --build --preset release
-
-# Run tests
-ctest --preset default
+```
+Scan → Load → Use → Unload
 ```
 
-### Manual CMake
-```bash
-# Build with tests (default)
-cmake -DBUILD_TESTS=ON ..
+1. **Scan** — `ReadAssetFile("assets/")` walks the folder, assigns IDs, stores metadata
+2. **Load** — `LoadFile(id, &out)` reads and parses the file, caches the result
+3. **Use** — Access struct fields: pixel data, vertices, samples, source code
+4. **Unload** — `Unload(id)` or `UnloadAll()` frees cached memory
 
-# Build without tests
-cmake -DBUILD_TESTS=OFF ..
+---
 
-# Run tests
-cd build && ctest --output-on-failure
+## Error Handling
+
+Every `LoadFile` returns `bool`. Always check:
+
+```cpp
+MeshFile mesh;
+if (!am.LoadFile(id, &mesh)) {
+    // Failed — check ID, file path, type match
+    return;
+}
 ```
 
-## Customizing the Template
+---
 
-1. **Rename the project**: Edit `project-template/CMakeLists.txt` — change `MyProject`
-2. **Rename the library**: Rename `mylib/` folder and update `src/CMakeLists.txt`
-3. **Rename the app**: Change `myapp` in `src/CMakeLists.txt`
-4. **Add more libraries**: Create new folders under `src/` and add `add_subdirectory()` calls
-5. **Change C++ standard**: Edit `set(CMAKE_CXX_STANDARD 17)` in root `CMakeLists.txt`
+## Thread Safety
 
+Not thread-safe. Wrap calls in a mutex if needed:
+
+```cpp
+std::lock_guard<std::mutex> lock(mtx);
+am.LoadFile(id, &mesh);
+```
+
+---
+
+## Requirements
+
+- C++17 compiler
+- No external dependencies (stb_image and tiny_obj_loader included)
+
+---
+
+## License
+
+stb_image — Public domain (Sean Barrett)
+tiny_obj_loader — MIT (Syoyo Fujita)
+AssetManager — Public domain
